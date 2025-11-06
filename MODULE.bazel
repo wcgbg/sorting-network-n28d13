@@ -1,0 +1,22 @@
+module(name = "sorting_network")
+
+bazel_dep(name = "rules_cc", version = "0.2.13")
+bazel_dep(name = "rules_proto", version = "7.1.0")
+bazel_dep(name = "protobuf", version = "33.0")
+bazel_dep(name = "gflags", version = "2.2.2")
+bazel_dep(name = "glog", version = "0.7.1")
+bazel_dep(name = "googletest", version = "1.17.0")
+bazel_dep(name = "boost.algorithm", version = "1.88.0.bcr.1")
+bazel_dep(name = "boost.dynamic_bitset", version = "1.88.0.bcr.1")
+bazel_dep(name = "boost.iostreams", version = "1.88.0.bcr.1")
+
+# Hedron's Compile Commands Extractor for Bazel
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+    commit = "abb61a688167623088f8768cc9264798df6a9d10",
+    # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
+    # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
+)

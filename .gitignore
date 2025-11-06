@@ -1,0 +1,85 @@
+# Bazel build artifacts
+bazel-*
+
+# C++ build artifacts
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+
+# Python
+__pycache__/
+
+# Machine learning
+*.pt
+*.pth
+*.pkl
+*.ptl
+*.ptz
+*.ptzl
+checkpoints*/
+logs/
+data/
+
+# Compiler generated files
+*.gcno
+*.gcda
+*.gcov
+*.dSYM/
+
+# IDE and editor files
+.vscode/
+.cursor/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+*.backup
+
+# CMake (if used alongside Bazel)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Package managers
+node_modules/
+vendor/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Sorting network
+pb*/
+extend.opt_inv
+*.png
+n*.row*.txt
+prefixes.good/3_layers/n10.all.txt
+*.pb.txt
+*.pb
+*.cnf
+*.gz
+*.sol
+*.done
+tmp/
+generated/

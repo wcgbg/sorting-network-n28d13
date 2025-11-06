@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package pb;
+
+message Layer {
+  // matching[i] = j means that there is a comparator between i and j. 
+  // -1 means that the channel i is not matched.
+  repeated int32 matching = 1;
+}
+
+message Network {
+  int32 n = 1;
+  repeated Layer layer = 2;
+  repeated uint64 output = 3;
+}
+
+message NetworkCollection {
+  repeated Network network = 1;
+}
