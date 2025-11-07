@@ -28,9 +28,11 @@ def parse_args():
     return parser.parse_args()
 
 
-def solve_sat_by_kissat(cnf_file):
-    executable = "kissat"
+def solve_sat_by_kissat(cnf_file, solution_file):
+    executable = os.getenv("KISSAT", "kissat")
     process = subprocess.run([executable, cnf_file], capture_output=True, text=True)
+    with open(solution_file, "w") as f:
+        f.write(process.stdout)
     if process.returncode == 10:
         assert "s SATISFIABLE" in process.stdout
         return True
@@ -41,17 +43,8 @@ def solve_sat_by_kissat(cnf_file):
         raise ValueError(f"Unknown return code: {process.returncode}")
 
 
-def solve_sat_by_minisat(cnf_file):
+def solve_sat_by_minisat(cnf_file, solution_file):
     executable = os.getenv("MINISAT", "minisat")
-
-    # Determine solution file name (remove .cnf.gz or .cnf extension if present)
-    solution_file = cnf_file
-    if cnf_file.endswith(".cnf.gz"):
-        solution_file = cnf_file[:-7]
-    elif cnf_file.endswith(".cnf"):
-        solution_file = cnf_file[:-4]
-    solution_file = solution_file + ".sol"
-
     process = subprocess.run(
         [executable, cnf_file, solution_file], capture_output=True, text=True
     )
@@ -141,12 +134,20 @@ def solve(args_tuple):
             result = json.load(f)
             return cnf_file, result["is_sat"], 0.0
 
+    # Determine solution file name (remove .cnf.gz or .cnf extension if present)
+    solution_file = cnf_file
+    if cnf_file.endswith(".cnf.gz"):
+        solution_file = cnf_file[:-7]
+    elif cnf_file.endswith(".cnf"):
+        solution_file = cnf_file[:-4]
+    solution_file = solution_file + ".sol"
+
     # Solve the problem
     time0 = time.time()
     if solver == "kissat":
-        is_sat = solve_sat_by_kissat(cnf_file)
+        is_sat = solve_sat_by_kissat(cnf_file, solution_file)
     elif solver == "minisat":
-        is_sat = solve_sat_by_minisat(cnf_file)
+        is_sat = solve_sat_by_minisat(cnf_file, solution_file)
     elif solver == "cryptominisat":
         is_sat = solve_sat_by_cryptominisat(cnf_file)
     elif solver == "painless":

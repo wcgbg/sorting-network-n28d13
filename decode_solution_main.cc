@@ -80,12 +80,40 @@ std::vector<int> ParseSolution(const std::string &solution_file) {
   if (line == "UNSAT") {
     return {};
   }
-  CHECK_EQ(line, "SAT");
-  int x = 0;
-  std::vector<int> solution;
-  while (ifstream >> x) {
-    solution.push_back(x);
+  if (line == "SAT") {
+    // MiniSat solution format
+    int x = 0;
+    std::vector<int> solution;
+    while (ifstream >> x) {
+      solution.push_back(x);
+    }
+    return solution;
   }
+  CHECK(line.starts_with("c "));
+  bool is_sat = false;
+  std::vector<int> solution;
+  while (std::getline(ifstream, line)) {
+    if (line.empty()) {
+      continue;
+    } else if (line.starts_with("c")) {
+      continue;
+    } else if (line.starts_with("s ")) {
+      if (line == "s UNSATISFIABLE") {
+        return {};
+      }
+      CHECK_EQ(line, "s SATISFIABLE");
+      is_sat = true;
+    } else if (line.starts_with("v ")) {
+      std::istringstream iss(line.substr(2));
+      int x = 0;
+      while (iss >> x) {
+        solution.push_back(x);
+      }
+    } else {
+      LOG(FATAL) << "Unknown line: " << line;
+    }
+  }
+  CHECK(is_sat);
   return solution;
 }
 
@@ -143,6 +171,7 @@ int main(int argc, char *argv[]) {
     if (solution.empty()) {
       continue;
     }
+    CHECK_EQ(solution.back(), 0);
     int index = std::stoi(sol_path.stem().string());
     Network network = prefixes.at(index);
     int prefix_depth = network.layers.size();
