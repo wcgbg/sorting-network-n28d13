@@ -2,7 +2,7 @@
 
 We found a reflection-symmetric [sorting network](https://en.wikipedia.org/wiki/Sorting_network) with 28 channels and depth 13, improving the previous depth upper bound for 27- and 28-channel networks from 14 to 13. The 28-channel sorting network was found by stacking prefixes from 16-channel and 12-channel networks, adding layers greedily one comparator at a time, and solving for the remaining layers using SAT.
 
-For details, see our [paper](paper/main.pdf).
+For details, see our [paper](https://arxiv.org/abs/2511.04107).
 
 ## Result
 
