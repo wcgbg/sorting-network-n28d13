@@ -42,25 +42,12 @@ sudo apt install /tmp/bazelisk-amd64.deb
 
 ### C++ Toolchain
 
-This project requires C++20 support. We have tested with Clang 15 and GCC 13.
-
-**Option 1:** Set environment variables:
-```bash
-export CC=clang-15
-export CXX=clang++-15
-```
-
-**Option 2:** Configure in `.bazelrc`:
-```
-build --repo_env=CC=clang-15
-build --repo_env=CXX=clang++-15
-```
+This project requires C++20 support. We have tested with Clang 17 and GCC 13. Set the toolchain in the first two lines in `.bazelrc`.
 
 **Ubuntu 24.04 installation:**
 ```bash
-sudo apt install clang-15
+sudo apt install clang
 ```
-Then uncomment the first two lines in `.bazelrc`.
 
 **macOS installation:**
 Install the Apple C++ toolchain by
@@ -77,6 +64,8 @@ Python 3.12 or later is required (tested with 3.12).
 
 This project uses MiniSat SAT solver: http://minisat.se/
 
+Install MiniSat. If `minisat` is not in the `$PATH`, set it to the environment variable `MINISAT`, e.g. `export MINISAT=$HOME/minisat/build/release/bin/minisat`. Build MiniSat from the source code (a little bit faster), or install it as below.
+
 **Ubuntu 24.04 installation:**
 ```bash
 sudo apt install minisat
@@ -91,7 +80,7 @@ brew install minisat
 
 Build all required executables:
 ```bash
-bazel build -c opt :extend_network_main :stack_main :add_comparators_main :optimize_window_size_main :sat_generate_cnf_main :decode_solution_main
+bazel build -c opt :add_layers_main :stack_main :add_comparators_main :optimize_window_size_main :sat_generate_cnf_main :decode_solution_main
 ```
 
 **Note for macOS users:** If using Apple clang, add `--config=macos` to the build command.
@@ -115,14 +104,14 @@ mkdir -p generated
 
 Find the best 4 prefixes with 5 layers on 12 channels:
 ```bash
-bazel-bin/extend_network_main --n 12 --symmetric --input_depth 1 --output_depth 5 --output_path generated/n12d5.pb --keep_best_count ,,,4
+bazel-bin/add_layers_main --n 12 --symmetric --input_depth 1 --output_depth 5 --output_path generated/n12d5.pb --keep_best_count ,,,4
 ```
 
 ### Generate 16-Channel Prefixes
 
 Find the best 2 prefixes with 5 layers on 16 channels:
 ```bash
-bazel-bin/extend_network_main --n 16 --symmetric --input_depth 1 --output_depth 5 --output_path generated/n16d5.pb --keep_best_count 1,1,1,1
+bazel-bin/add_layers_main --n 16 --symmetric --input_depth 1 --output_depth 5 --output_path generated/n16d5.pb --keep_best_count 1,1,1,1
 ```
 
 ### Stack Prefixes

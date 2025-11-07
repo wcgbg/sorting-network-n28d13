@@ -1,5 +1,5 @@
-#build --repo_env=CC=clang-15
-#build --repo_env=CXX=clang++-15
+build --repo_env=CC=clang
+build --repo_env=CXX=clang++
 
 build --cxxopt=-std=c++20
 build --cxxopt=-Wall

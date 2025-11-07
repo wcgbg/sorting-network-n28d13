@@ -42,7 +42,7 @@ def solve_sat_by_kissat(cnf_file):
 
 
 def solve_sat_by_minisat(cnf_file):
-    executable = os.path.expanduser("~/minisat/build/release/bin/minisat")
+    executable = os.getenv("MINISAT", "minisat")
 
     # Determine solution file name (remove .cnf.gz or .cnf extension if present)
     solution_file = cnf_file
