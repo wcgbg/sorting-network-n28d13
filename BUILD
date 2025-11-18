@@ -36,8 +36,8 @@ cc_library(
 )
 
 cc_test(
-    name = "math_test",
-    srcs = ["math_test.cc"],
+    name = "math_utils_test",
+    srcs = ["math_utils_test.cc"],
     deps = [
         ":math_utils",
         "@googletest//:gtest",
