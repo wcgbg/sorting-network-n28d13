@@ -39,10 +39,11 @@ int main(int argc, char *argv[]) {
       networks[i].outputs = NetworkOutputs(networks[i]);
     }
     std::cout << "i=" << i << std::endl;
-    std::cout << "Network: " << networks[i].ToString() << std::endl;
+    std::cout << "Network: " << networks[i].ToString();
     std::cout << "Is symmetric: " << networks[i].IsSymmetric() << std::endl;
     std::cout << "Is sorting network: " << networks[i].IsASortingNetwork()
               << std::endl;
+    std::cout << "Output size: " << networks[i].outputs.size();
     std::cout << std::endl;
   }
 

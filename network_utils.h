@@ -30,10 +30,4 @@ std::vector<Network> RemoveRedundantNetworks(std::vector<Network> networks,
                                              bool symmetric, bool fast,
                                              std::mt19937 *gen);
 
-// Check if any prefixes in the collection are redundant (i.e., their outputs
-// can be achieved by other prefixes in the collection). Terminates the program
-// if redundant prefixes are found.
-void CheckRedundancy(const std::vector<Network> &networks, bool symmetric,
-                     std::mt19937 *gen);
-
 std::vector<Network> CreateFirstLayer(int n, bool symmetric);

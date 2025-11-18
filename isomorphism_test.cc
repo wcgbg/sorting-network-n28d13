@@ -74,6 +74,22 @@ GenerateIsomorphicSubset(int n, const std::vector<OutputType> &set_b,
   return result;
 }
 
+bool IsIsomorphicToSubsetNegativePrecheck(
+    int n, const std::vector<OutputType> &set_a,
+    const std::vector<OutputType> &set_b) {
+  std::array<std::vector<uint8_t>, 2> count_by_row_a_sorted =
+      internal::AggregateRows(n, set_a, true);
+  std::array<std::vector<uint64_t>, 2> count_by_col_a_sorted =
+      internal::AggregateColumns(n, set_a, true);
+  std::array<std::vector<uint8_t>, 2> count_by_row_b_sorted =
+      internal::AggregateRows(n, set_b, true);
+  std::array<std::vector<uint64_t>, 2> count_by_col_b_sorted =
+      internal::AggregateColumns(n, set_b, true);
+  return ::IsIsomorphicToSubsetNegativePrecheck(
+      n, set_a, count_by_row_a_sorted, count_by_col_a_sorted, set_b,
+      count_by_row_b_sorted, count_by_col_b_sorted);
+}
+
 // Test that core implementations agree on the result
 void TestCoreImplementationAgreement(int n,
                                      const std::vector<OutputType> &set_a,
@@ -82,8 +98,6 @@ void TestCoreImplementationAgreement(int n,
   // Run core implementations
   bool neg_precheck_result =
       IsIsomorphicToSubsetNegativePrecheck(n, set_a, set_b);
-  bool pos_precheck_result =
-      IsIsomorphicToSubsetPositivePrecheck(n, set_a, set_b, 100, gen);
   bool slow_result = internal::IsIsomorphicToSubsetSlow(n, set_a, set_b);
   bool backtracking_result =
       internal::IsIsomorphicToSubsetBacktracking(n, set_a, set_b, false, gen);
@@ -98,10 +112,6 @@ void TestCoreImplementationAgreement(int n,
   if (slow_result) {
     EXPECT_TRUE(neg_precheck_result)
         << "Precheck returned false but slow function returned true for n=" << n
-        << ", set_a size=" << set_a.size() << ", set_b size=" << set_b.size();
-  } else {
-    EXPECT_FALSE(pos_precheck_result)
-        << "Precheck returned true but slow function returned false for n=" << n
         << ", set_a size=" << set_a.size() << ", set_b size=" << set_b.size();
   }
 }

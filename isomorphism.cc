@@ -18,50 +18,16 @@
 
 namespace {
 
-std::array<std::vector<int>, 2>
-AggregateRows(int n, const std::vector<OutputType> &set, bool sort) {
-  std::vector<int> one_count_by_row(set.size(), 0);
-  std::vector<int> zero_count_by_row(set.size(), 0);
-  for (int i = 0; i < set.size(); i++) {
-    OutputType x = set[i];
-    one_count_by_row[i] = std::popcount(x);
-    zero_count_by_row[i] = n - one_count_by_row[i];
-  }
-  if (sort) {
-    std::sort(one_count_by_row.begin(), one_count_by_row.end());
-    std::sort(zero_count_by_row.begin(), zero_count_by_row.end());
-  }
-  return {zero_count_by_row, one_count_by_row};
-}
-
-std::array<std::vector<int>, 2>
-AggregateColumns(int n, const std::vector<OutputType> &set, bool sort) {
-  std::vector<int> one_count_by_col(n, 0);
-  std::vector<int> zero_count_by_col(n, 0);
-  for (int i = 0; i < n; i++) {
-    int one_count_by_col_i = 0;
-    for (OutputType x : set) {
-      OutputType bit = (x >> i) & OutputType(1);
-      one_count_by_col_i += bit;
-    }
-    one_count_by_col[i] = one_count_by_col_i;
-    zero_count_by_col[i] = set.size() - one_count_by_col_i;
-  }
-  if (sort) {
-    std::sort(one_count_by_col.begin(), one_count_by_col.end());
-    std::sort(zero_count_by_col.begin(), zero_count_by_col.end());
-  }
-  return {zero_count_by_col, one_count_by_col};
-}
-
-std::vector<OutputType> SortByWeight(int n, const std::vector<OutputType> &set,
-                                     const std::vector<int> &count_one_by_col,
-                                     std::vector<int> *inv_perm) {
+std::vector<OutputType>
+SortByWeight(int n, const std::vector<OutputType> &set,
+             const std::vector<uint64_t> &count_one_by_col,
+             std::vector<int> *inv_perm) {
   CHECK_NOTNULL(inv_perm);
   std::stable_sort(inv_perm->begin(), inv_perm->end(), [&](int i, int j) {
     return count_one_by_col[i] < count_one_by_col[j];
   });
   std::vector<OutputType> set_perm;
+  set_perm.reserve(set.size());
   for (OutputType x : set) {
     OutputType x_perm = 0;
     for (int i = 0; i < n; i++) {
@@ -147,9 +113,75 @@ bool IsIsomorphicToSubsetBacktrackingRecursive(
   return false;
 }
 
+bool IsIsomorphicToSubsetNegativePrecheckByRow(
+    const std::array<std::vector<uint8_t>, 2> &count_by_row_a_sorted,
+    const std::array<std::vector<uint8_t>, 2> &count_by_row_b_sorted) {
+  for (int bit = 0; bit < 2; bit++) {
+    CHECK_LE(count_by_row_a_sorted[bit].size(),
+             count_by_row_b_sorted[bit].size());
+    for (int i = 0; i < count_by_row_a_sorted[bit].size(); i++) {
+      if (count_by_row_a_sorted[bit][i] < count_by_row_b_sorted[bit][i]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool IsIsomorphicToSubsetNegativePrecheckByCol(
+    int n, const std::array<std::vector<uint64_t>, 2> &count_by_col_a_sorted,
+    const std::array<std::vector<uint64_t>, 2> &count_by_col_b_sorted) {
+  for (int bit = 0; bit < 2; bit++) {
+    CHECK_EQ(count_by_col_a_sorted[bit].size(), n);
+    CHECK_EQ(count_by_col_b_sorted[bit].size(), n);
+    for (int i = 0; i < n; i++) {
+      if (count_by_col_a_sorted[bit][i] > count_by_col_b_sorted[bit][i]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 } // namespace
 
 namespace internal {
+
+std::array<std::vector<uint8_t>, 2>
+AggregateRows(int n, const std::vector<OutputType> &set, bool sort) {
+  std::vector<uint8_t> one_count_by_row(set.size(), 0);
+  std::vector<uint8_t> zero_count_by_row(set.size(), 0);
+  for (int i = 0; i < set.size(); i++) {
+    OutputType x = set[i];
+    one_count_by_row[i] = std::popcount(x);
+    zero_count_by_row[i] = n - one_count_by_row[i];
+  }
+  if (sort) {
+    std::sort(one_count_by_row.begin(), one_count_by_row.end());
+    std::sort(zero_count_by_row.begin(), zero_count_by_row.end());
+  }
+  return {zero_count_by_row, one_count_by_row};
+}
+
+std::array<std::vector<uint64_t>, 2>
+AggregateColumns(int n, const std::vector<OutputType> &set, bool sort) {
+  std::vector<uint64_t> one_count_by_col(n, 0);
+  std::vector<uint64_t> zero_count_by_col(n, 0);
+  for (int i = 0; i < n; i++) {
+    uint64_t one_count_by_col_i = 0;
+    for (OutputType x : set) {
+      OutputType bit = (x >> i) & OutputType(1);
+      one_count_by_col_i += bit;
+    }
+    one_count_by_col[i] = one_count_by_col_i;
+    zero_count_by_col[i] = set.size() - one_count_by_col_i;
+  }
+  if (sort) {
+    std::sort(one_count_by_col.begin(), one_count_by_col.end());
+    std::sort(zero_count_by_col.begin(), zero_count_by_col.end());
+  }
+  return {zero_count_by_col, one_count_by_col};
+}
 
 bool IsIsomorphicToSubsetSlow(int n, const std::vector<OutputType> &set_a,
                               const std::vector<OutputType> &set_b) {
@@ -208,12 +240,19 @@ bool IsIsomorphicToSubsetBacktracking(int n,
       n, set_a, set_b, symmetric, set_b_pasts, 0, perm, used, gen);
 }
 
-bool IsIsomorphicToSubset(int n, const std::vector<OutputType> &set_a,
-                          const std::vector<OutputType> &set_b, bool symmetric,
-                          std::mt19937 *gen) {
+bool IsIsomorphicToSubset(
+    int n, const std::vector<OutputType> &set_a,
+    const std::array<std::vector<uint8_t>, 2> &count_by_row_a_sorted,
+    const std::array<std::vector<uint64_t>, 2> &count_by_col_a_sorted,
+    const std::vector<OutputType> &set_b,
+    const std::array<std::vector<uint8_t>, 2> &count_by_row_b_sorted,
+    const std::array<std::vector<uint64_t>, 2> &count_by_col_b_sorted,
+    bool symmetric, std::mt19937 *gen) {
   CHECK(std::is_sorted(set_b.begin(), set_b.end()));
 
-  if (!IsIsomorphicToSubsetNegativePrecheck(n, set_a, set_b)) {
+  if (!IsIsomorphicToSubsetNegativePrecheck(
+          n, set_a, count_by_row_a_sorted, count_by_col_a_sorted, set_b,
+          count_by_row_b_sorted, count_by_col_b_sorted)) {
     return false;
   }
 
@@ -224,9 +263,18 @@ bool IsIsomorphicToSubset(int n, const std::vector<OutputType> &set_a,
 bool IsRedundant(
     int n, int i,
     const std::vector<std::vector<OutputType>> &outputs_collection,
+    const std::vector<std::array<std::vector<uint8_t>, 2>>
+        &count_by_row_sorted_collection,
+    const std::vector<std::array<std::vector<uint64_t>, 2>>
+        &count_by_col_sorted_collection,
     const std::vector<std::vector<OutputType>> &outputs_collection_inv,
+    const std::vector<std::array<std::vector<uint8_t>, 2>>
+        &count_by_row_inv_sorted_collection,
+    const std::vector<std::array<std::vector<uint64_t>, 2>>
+        &count_by_col_inv_sorted_collection,
     const std::vector<std::atomic<bool>> &is_redundant_atomic, bool fast,
-    bool is_last_pass, bool symmetric, bool verbose, std::mt19937 *gen) {
+    bool is_last_pass, bool symmetric, std::mt19937 *gen) {
+  auto size_i = outputs_collection[i].size();
   for (int j = 0; j < outputs_collection.size(); j++) {
     if (is_redundant_atomic[j].load()) {
       continue;
@@ -234,61 +282,53 @@ bool IsRedundant(
     if (j == i) {
       continue;
     }
-    auto size_i = outputs_collection[i].size();
     auto size_j = outputs_collection[j].size();
     if (size_i < size_j) {
-      continue;
+      break;
     }
     if (size_i == size_j && i < j) {
-      continue;
+      break;
     }
     // (size_i, i) > (size_j, j)
     if (fast || !is_last_pass) {
+      if (!IsIsomorphicToSubsetNegativePrecheckByCol(
+              n, count_by_col_sorted_collection[j],
+              count_by_col_sorted_collection[i])) {
+        continue;
+      }
       if (std::includes(
               outputs_collection[i].begin(), outputs_collection[i].end(),
               outputs_collection[j].begin(), outputs_collection[j].end())) {
-        if (verbose) {
-          std::cout << std::format("{} is redundant because it covers {}.", i,
-                                   j)
-                    << std::endl;
-        }
         return true;
       }
       if (!outputs_collection_inv.empty()) {
+        if (!IsIsomorphicToSubsetNegativePrecheckByCol(
+                n, count_by_col_sorted_collection[j],
+                count_by_col_inv_sorted_collection[i])) {
+          continue;
+        }
         if (std::includes(outputs_collection_inv[i].begin(),
                           outputs_collection_inv[i].end(),
                           outputs_collection[j].begin(),
                           outputs_collection[j].end())) {
-          if (verbose) {
-            std::cout
-                << std::format(
-                       "{} is redundant because its reflection covers {}.", i,
-                       j)
-                << std::endl;
-          }
           return true;
         }
       }
     } else {
       // last pass
-      if (IsIsomorphicToSubset(n, outputs_collection[j], outputs_collection[i],
-                               symmetric, gen)) {
-        if (verbose) {
-          std::cout << std::format("{} is redundant because it covers {}.", i,
-                                   j)
-                    << std::endl;
-        }
+      if (IsIsomorphicToSubset(
+              n, outputs_collection[j], count_by_row_sorted_collection[j],
+              count_by_col_sorted_collection[j], outputs_collection[i],
+              count_by_row_sorted_collection[i],
+              count_by_col_sorted_collection[i], symmetric, gen)) {
         return true;
       }
       CHECK(!outputs_collection_inv.empty());
-      if (IsIsomorphicToSubset(n, outputs_collection[j],
-                               outputs_collection_inv[i], symmetric, gen)) {
-        if (verbose) {
-          std::cout << std::format(
-                           "{} is redundant because its reflection covers {}.",
-                           i, j)
-                    << std::endl;
-        }
+      if (IsIsomorphicToSubset(
+              n, outputs_collection[j], count_by_row_sorted_collection[j],
+              count_by_col_sorted_collection[j], outputs_collection_inv[i],
+              count_by_row_inv_sorted_collection[i],
+              count_by_col_inv_sorted_collection[i], symmetric, gen)) {
         return true;
       }
     }
@@ -301,7 +341,8 @@ bool IsRedundant(
 std::pair<std::vector<OutputType>, std::vector<int>>
 SortByWeight(int n, const std::vector<OutputType> &set,
              std::mt19937 *nullable_gen, bool symmetric) {
-  std::vector<int> count_one_by_col = AggregateColumns(n, set, false)[1];
+  std::vector<uint64_t> count_one_by_col =
+      internal::AggregateColumns(n, set, false)[1];
   std::vector<int> inv_perm(n);
   std::iota(inv_perm.begin(), inv_perm.end(), 0);
   if (nullable_gen) {
@@ -326,67 +367,33 @@ SortByWeight(int n, const std::vector<OutputType> &set,
 
 bool IsIsomorphicToSubsetNegativePrecheck(
     int n, const std::vector<OutputType> &set_a,
-    const std::vector<OutputType> &set_b) {
+    const std::array<std::vector<uint8_t>, 2> &count_by_row_a_sorted,
+    const std::array<std::vector<uint64_t>, 2> &count_by_col_a_sorted,
+    const std::vector<OutputType> &set_b,
+    const std::array<std::vector<uint8_t>, 2> &count_by_row_b_sorted,
+    const std::array<std::vector<uint64_t>, 2> &count_by_col_b_sorted) {
   if (set_a.size() > set_b.size()) {
     return false;
   }
-  auto count_by_row_a = AggregateRows(n, set_a, true);
-  auto count_by_row_b = AggregateRows(n, set_b, true);
-  for (int bit = 0; bit < 2; bit++) {
-    CHECK_LE(count_by_row_a[bit].size(), count_by_row_b[bit].size());
-    for (int i = 0; i < count_by_row_a[bit].size(); i++) {
-      if (count_by_row_a[bit][i] < count_by_row_b[bit][i]) {
-        return false;
-      }
-    }
+  if (!IsIsomorphicToSubsetNegativePrecheckByCol(n, count_by_col_a_sorted,
+                                                 count_by_col_b_sorted)) {
+    return false;
   }
-  auto count_by_col_a = AggregateColumns(n, set_a, true);
-  auto count_by_col_b = AggregateColumns(n, set_b, true);
-  for (int bit = 0; bit < 2; bit++) {
-    CHECK_EQ(count_by_col_a[bit].size(), n);
-    CHECK_EQ(count_by_col_b[bit].size(), n);
-    for (int i = 0; i < n; i++) {
-      if (count_by_col_a[bit][i] > count_by_col_b[bit][i]) {
-        return false;
-      }
-    }
+  if (!IsIsomorphicToSubsetNegativePrecheckByRow(count_by_row_a_sorted,
+                                                 count_by_row_b_sorted)) {
+    return false;
   }
   return true;
 }
 
-bool IsIsomorphicToSubsetPositivePrecheck(int n,
-                                          const std::vector<OutputType> &set_a,
-                                          const std::vector<OutputType> &set_b,
-                                          int num_tests, std::mt19937 *gen) {
-  std::vector<int> count_one_by_col_a = AggregateColumns(n, set_a, false)[1];
-  std::vector<int> count_one_by_col_b = AggregateColumns(n, set_b, false)[1];
-  std::vector<int> inv_perm_b(n);
-  std::iota(inv_perm_b.begin(), inv_perm_b.end(), 0);
-  // std::stable_sort(perm_b.begin(), perm_b.end(), [&](int i, int j) {
-  //   return count_one_by_col_b[i] < count_one_by_col_b[j];
-  // });
-  std::vector<OutputType> set_b_perm =
-      SortByWeight(n, set_b, count_one_by_col_b, &inv_perm_b);
-  std::vector<int> inv_perm_a(n);
-  std::iota(inv_perm_a.begin(), inv_perm_a.end(), 0);
-  for (int i = 0; i < num_tests; i++) {
-    std::shuffle(inv_perm_a.begin(), inv_perm_a.end(), *gen);
-    // std::stable_sort(perm_a.begin(), perm_a.end(), [&](int i, int j) {
-    //   return count_one_by_col_a[i] < count_one_by_col_a[j];
-    // });
-    std::vector<OutputType> set_a_perm =
-        SortByWeight(n, set_a, count_one_by_col_a, &inv_perm_a);
-    if (std::includes(set_b_perm.begin(), set_b_perm.end(), set_a_perm.begin(),
-                      set_a_perm.end())) {
-      return true;
-    }
-  }
-  return false;
-}
+std::vector<bool>
+FindRedundantOutputs(int n,
+                     std::vector<std::vector<OutputType>> outputs_collection,
+                     bool fast, bool symmetric, std::mt19937 *gen) {
+  CHECK(std::is_sorted(
+      outputs_collection.begin(), outputs_collection.end(),
+      [](const auto &a, const auto &b) { return a.size() < b.size(); }));
 
-std::vector<bool> FindRedundantOutputs(
-    int n, std::vector<std::vector<OutputType>> outputs_collection, bool fast,
-    bool symmetric, std::mt19937 *gen, bool verbose) {
   if (symmetric) {
     // Symmetry check is expensive for large n, so we only verify it for n < 16.
     // For larger n, we assume the caller has ensured symmetry.
@@ -401,13 +408,57 @@ std::vector<bool> FindRedundantOutputs(
       }
     }
   }
+
+  LOG(INFO) << "Computing count by row and column";
+  std::vector<std::array<std::vector<uint8_t>, 2>>
+      count_by_row_sorted_collection;
+  std::vector<std::array<std::vector<uint8_t>, 2>>
+      count_by_row_inv_sorted_collection;
+  std::vector<std::array<std::vector<uint64_t>, 2>>
+      count_by_col_sorted_collection;
+  std::vector<std::array<std::vector<uint64_t>, 2>>
+      count_by_col_inv_sorted_collection;
+  {
+    // Compute count by row and column in parallel
+    count_by_row_sorted_collection.resize(outputs_collection.size());
+    count_by_row_inv_sorted_collection.resize(outputs_collection.size());
+    count_by_col_sorted_collection.resize(outputs_collection.size());
+    count_by_col_inv_sorted_collection.resize(outputs_collection.size());
+    std::atomic<int> next_i(0);
+    int num_threads = std::thread::hardware_concurrency();
+    CHECK_GT(num_threads, 0);
+    auto worker = [&]() {
+      while (true) {
+        int i = next_i.fetch_add(1);
+        if (i >= outputs_collection.size()) {
+          break;
+        }
+        const auto &outputs = outputs_collection[i];
+        count_by_row_sorted_collection[i] =
+            internal::AggregateRows(n, outputs, true);
+        count_by_row_inv_sorted_collection[i] = {
+            count_by_row_sorted_collection[i][1],
+            count_by_row_sorted_collection[i][0]};
+        count_by_col_sorted_collection[i] =
+            internal::AggregateColumns(n, outputs, true);
+        count_by_col_inv_sorted_collection[i] = {
+            count_by_col_sorted_collection[i][1],
+            count_by_col_sorted_collection[i][0]};
+      }
+    };
+    std::vector<std::thread> threads;
+    for (int t = 0; t < num_threads; t++) {
+      threads.emplace_back(worker);
+    }
+    for (auto &thread : threads) {
+      thread.join();
+    }
+  }
+
   std::vector<std::atomic<bool>> is_redundant_atomic(outputs_collection.size());
   int num_passes = 6;
   if (fast) {
     num_passes = 2;
-  }
-  if (verbose) {
-    num_passes = 1;
   }
   int num_threads = std::thread::hardware_concurrency();
   CHECK_GT(num_threads, 0);
@@ -422,17 +473,8 @@ std::vector<bool> FindRedundantOutputs(
         outputs_collection_inv = outputs_collection;
       }
     }
-    for (int i = 0; i < outputs_collection_inv.size(); i++) {
-      if (is_redundant_atomic[i].load()) {
-        continue;
-      }
-      for (OutputType &x : outputs_collection_inv[i]) {
-        x ^= (OutputType(1) << n) - 1;
-      }
-    }
-
+    // SortByWeight in parallel
     {
-      // SortByWeight in parallel
       std::atomic<int> next_i(0);
       auto worker = [&]() {
         while (true) {
@@ -445,6 +487,14 @@ std::vector<bool> FindRedundantOutputs(
           }
           outputs_collection[i] =
               SortByWeight(n, outputs_collection[i], gen, symmetric).first;
+          if (outputs_collection_inv.empty()) {
+            continue;
+          }
+          for (OutputType &x : outputs_collection_inv[i]) {
+            x ^= (OutputType(1) << n) - 1;
+          }
+          outputs_collection_inv[i] =
+              SortByWeight(n, outputs_collection_inv[i], gen, symmetric).first;
         }
       };
       std::vector<std::thread> threads;
@@ -455,17 +505,8 @@ std::vector<bool> FindRedundantOutputs(
         thread.join();
       }
     }
-
-    for (int i = 0; i < outputs_collection_inv.size(); i++) {
-      if (is_redundant_atomic[i].load()) {
-        continue;
-      }
-      outputs_collection_inv[i] =
-          SortByWeight(n, outputs_collection_inv[i], gen, symmetric).first;
-    }
-
+    // Check redundancy in parallel
     {
-      // Check redundancy in parallel
       std::atomic<int> next_i(0);
       auto worker = [&]() {
         while (true) {
@@ -483,9 +524,11 @@ std::vector<bool> FindRedundantOutputs(
             continue;
           }
           is_redundant_atomic[i].store(internal::IsRedundant(
-              n, i, outputs_collection, outputs_collection_inv,
-              is_redundant_atomic, fast, pass + 1 == num_passes, symmetric,
-              verbose, gen));
+              n, i, outputs_collection, count_by_row_sorted_collection,
+              count_by_col_sorted_collection, outputs_collection_inv,
+              count_by_row_inv_sorted_collection,
+              count_by_col_inv_sorted_collection, is_redundant_atomic, fast,
+              pass + 1 == num_passes, symmetric, gen));
         }
       };
 

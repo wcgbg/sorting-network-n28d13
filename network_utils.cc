@@ -288,6 +288,10 @@ std::vector<Network> RemoveRedundantNetworks(std::vector<Network> networks,
   if (networks.size() <= 1) {
     return networks;
   }
+  std::sort(networks.begin(), networks.end(),
+            [](const Network &a, const Network &b) {
+              return a.outputs.size() < b.outputs.size();
+            });
   int n = networks.front().n;
   std::vector<std::vector<OutputType>> outputs = NetworkOutputs(networks);
   std::vector<bool> is_redundant =
@@ -304,30 +308,6 @@ std::vector<Network> RemoveRedundantNetworks(std::vector<Network> networks,
               return a.outputs.size() < b.outputs.size();
             });
   return non_redundant_networks;
-}
-
-void CheckRedundancy(const std::vector<Network> &networks, bool symmetric,
-                     std::mt19937 *gen) {
-  if (networks.size() <= 1) {
-    return;
-  }
-  int n = networks.front().n;
-  std::vector<std::vector<OutputType>> outputs_collection =
-      NetworkOutputs(networks);
-  std::vector<bool> is_redundant =
-      FindRedundantOutputs(n, outputs_collection, false, symmetric, gen);
-  int redundant_count =
-      std::count(is_redundant.begin(), is_redundant.end(), true);
-  if (redundant_count == 0) {
-    return;
-  }
-  std::ostringstream oss;
-  for (int i = 0; i < networks.size(); i++) {
-    if (is_redundant[i]) {
-      oss << i << std::endl;
-    }
-  }
-  LOG(FATAL) << "Found redundant prefixes! " << oss.str();
 }
 
 std::vector<Network> CreateFirstLayer(int n, bool symmetric) {
