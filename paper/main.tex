@@ -145,15 +145,13 @@ A sorting network is reflection-symmetric if it is invariant under channel refle
 
 Ehlers~\cite{ehlers2017merging} improved the depth upper bound of the 24-channel networks to 12 layers. It stacked the prefixes of two 12-channel networks, and solved the remaining layers by a SAT solver.
 
-Our construction of n=28 and d=13 is based on \cite{ehlers2017merging}. As we have more channels and one more layer, we use two new techniques to reduce the search space: assume the network is reflection-symmetric, and greedily extend the 24-channel prefix by one layer before solving the SAT problem.
+Our construction of n=28 and d=13 is based on \cite{ehlers2017merging}. As we have more channels and one more layer, we use two new techniques to reduce the search space: assume the network is reflection-symmetric, and greedily extend the 24-channel prefix by one layer before solving the SAT problem. The full construction is found within 20 minutes on a common desktop computer.
 
 \section{Preliminaries and Redundant Prefixes}
-We formalize some notation. For an integer $n$, we use $[n]$ to denote the set $\{0, 1, \ldots, n-1\}$. A comparator is an unordered pair of distinct channels, denoted as $(i,j)$ where $i < j$. A layer is a set of comparators that can be applied in parallel, meaning no two comparators share a common channel.
-
 The search space for sorting networks grows exponentially with the number of channels, making exhaustive search computationally prohibitive for larger values of $n$. Consequently, researchers have developed various techniques to prune the search space and accelerate the discovery of optimal networks.
 
 \begin{lemma}[Zero-One Principle]\label{lemma:zero-one-principle}
-  If a comparison network with $n$ inputs sorts all $2^n$ Boolean sequences into non-decreasing order, then it correctly sorts all sequences of arbitrary (comparable) values. \cite{knuth1997artv3}
+  If a comparator network on $n$ channels sorts all $2^n$ Boolean sequences into non-decreasing order, then it correctly sorts all sequences of arbitrary (comparable) values. \cite{knuth1997artv3}
 \end{lemma}
 
 The zero-one principle is a powerful result that allows us to verify the correctness of a sorting network by testing only the $2^n$ binary input sequences rather than $n!$ cases.
@@ -173,12 +171,12 @@ To further reduce the search space, we use some symmetries: permutation and nega
   Let $P \fatsemi S$ be a sorting network on $n$ channels, and $P'$ be a comparator network on $n$ channels. If there exists a permutation $\sigma \in \mathbb{S}_n$ such that $\sigma (\operatorname{output}(P')) \subseteq \operatorname{output}(P)$, then there exists a comparator network $S'$ with the same depth as $S$ such that $P' \fatsemi S'$ is a sorting network. \cite{bundala2014optimal}
 \end{lemma}
 
-We denote the bitwise-not operator by $\neg$. For example, $\neg 001_2 = 110_2$. Also, we can apply it to a set of outputs by flipping each output, e.g. $\neg \{000_2,001_2,010_2\} = \{111_2,110_2,101_2\} = \{101_2,110_2,111_2\}$. Also, we denote $\rho_n$ the reflection permutation on $[n]$, i.e. $\rho_n(i) = n-1-i$.
+We denote the bitwise-not operator by $\neg$. For example, $\neg 001_2 = 110_2$. When it is applied to a set of outputs, it flips each output, e.g. $\neg \{000_2,001_2,010_2\} = \{111_2,110_2,101_2\} = \{101_2,110_2,111_2\}$. Also, For an integer $n$, we denote $[n]$ the set $\{0, 1, \ldots, n-1\}$, and $\rho_n$ the reflection permutation on $[n]$, i.e. $\rho_n(i) = n-1-i$.
 
 \begin{lemma}
   If a comparator network $S$ sorts input $x\in \{0,1\}^n$, then $S$ sorts $\rho_n(\neg x)$.
 \end{lemma}
-\cite{bundala2014optimal} uses this property to reduce the search space of the prefixes. We are giving a short proof here for completeness.
+Bundala and Závodnỳ~\cite{bundala2014optimal} use this property to reduce the search space of the prefixes. We are giving a short proof here for completeness.
 \begin{proof}
   Denote $\neg S$ the network that changes all the comparators in $S$ to max-min-comparators, which output max on top and min on bottom. Assume $S$ sorts $x$. We flip every bit in the network, so $\neg S$ sorts $\neg x$ into the reverse order. Then, we vertically reflect the network along with the input $x$. Therefore, $S$ sorts $\rho_n(\neg x)$.
 \end{proof}
@@ -191,11 +189,11 @@ Putting them together, we get the following corollary that allows us to remove t
 
 The lemma states that if the outputs of $P'$ (or their complements) are contained within the outputs of $P$ up to permutation, then we can replace $P$ with $P'$ in the construction. This allows us to prune the search space by removing redundant prefixes.
 
-In practice, it is not trivial to check if a network output set $A$ is isomorphic to the subset of another one $B$. We use two heuristics to speed up the check, one for positive cases, and one for negative cases.
+In practice, it is not trivial to check if a network output set $A$ is isomorphic to the subset of another one $B$. We use two techniques to speed up the check, one for positive cases, and one for negative cases.
 
-Consider $A$ as an $n \times m_A$ Boolean matrix, where $n$ is the number of channels, $m_A$ is the number of outputs in $A$, and $A_{i,j}\in \{0,1\}$ is the output on $i$-th channel of the $j$-th output. Similarly, we consider $B$ as an $n \times m_B$ Boolean matrix. We sort the $n$ rows of $A$ and $B$ by the row sum, respectively. If multiple rows have the same sum, we permute them randomly. If the columns of $B$ covers the columns of $A$, then $A$ is isomorphic to a subset of $B$. We repeat this random process a couple of times. In practice, it detects more than $90\%$ of the redundant outputs efficiently.
+Consider $A$ as an $m_A \times n$ Boolean matrix, and $A_{i,j}\in \{0,1\}$ is the output on $j$-th channel of the $i$-th output. Similarly, we consider $B$ as an $m_B \times n$ Boolean matrix. We sort the $n$ columns of $A$ and $B$ by the column sum, respectively. If multiple columns have the same sum, we permute them randomly. If the rows of $B$ covers the rows of $A$, then $A$ is isomorphic to a subset of $B$. We repeat this random process a couple of times. In practice, it detects more than $90\%$ of the redundant outputs efficiently.
 
-To quickly filter negative cases, we compute the row sums and column sums of $A$ and $B$. Denote the row sum sequence of $A$ by $\mathrm{RowSumA}_i$ for $i=0,1,\ldots,n-1$, and the column sum sequence of $A$ by $\mathrm{ColSumA}_j$ for $j=0,1,\ldots,m_A-1$. Similarly, we have $\mathrm{RowSumB}$ and $\mathrm{ColSumB}$. We sort $\mathrm{RowSumA}$, $\mathrm{RowSumB}$, $\mathrm{ColSumA}$, and $\mathrm{ColSumB}$, respectively. If $A$ is isomorphic to a subset of $B$, then $\mathrm{RowSumA}_i \leq \mathrm{RowSumB}_i$ for all $i=0,1,\ldots,n-1$, and $\mathrm{ColSumA}$ is a subsequence of $\mathrm{ColSumB}$. This technique has been commonly used in isomorphism detections.
+To quickly filter negative cases, we compute the column sums and row sums of matrix $A$ and $B$. Denote the row sum sequence of $A$ by $\mathrm{RowSumA}_i$ for $i \in [m_A]$, and the column sum sequence of $A$ by $\mathrm{ColSumA}_j$ for $j \in [n]$. Similarly, we compute $\mathrm{RowSumB}$ and $\mathrm{ColSumB}$. We sort $\mathrm{RowSumA}$, $\mathrm{RowSumB}$, $\mathrm{ColSumA}$, and $\mathrm{ColSumB}$, respectively. If $A$ is isomorphic to a subset of $B$, then $\mathrm{ColSumA}_j \leq \mathrm{ColSumB}_j$ for all $j \in [n]$, and $\mathrm{RowSumA}$ is a subsequence of $\mathrm{RowSumB}$. This property is commonly used in bipartite graph isomorphism and embedding detections and sorting networks \cite{codish2016sorting}.
 
 This paper focuses on reflection-symmetric sorting networks on even channels. We say a permutation $\sigma \in \mathbb{S}_n$ is reflection-symmetric if it is commutative with $\rho_n$, i.e. $\rho_n \circ \sigma = \sigma \circ \rho_n$. All these reflection-symmetric permutations form the centralizer of $\rho_n$ in $\mathbb{S}_n$, denoted by $\mathcal{C}(\rho_n)$. It is isomorphic to the wreath product of $\mathbb{C}_2$ and $\mathbb{S}_{n/2}$. In other words, we can permute the $n/2$ pairs (the $\mathbb{S}_{n/2}$ part), and independently flip each pair (the $\mathbb{C}_2$ part).
 
@@ -207,7 +205,7 @@ By applying the reflection-symmetry on Corollary~\ref{corollary:redundant-prefix
 We will use this corollary to eliminate redundant prefixes in Section~\ref{sec:n28d13}. Specifically, if both $P$ and $P'$ are in our search space, we can remove $P$ and keep only $P'$. The two speedup techniques described above also apply to the reflection-symmetric case by maintaining reflection symmetry at each step.
 
 
-\section{Construction of a Sorting Network for 28 Channels with 13 Layers}\label{sec:n28d13}
+\section{Construction of Depth-13 Sorting Network for 28 Channels}\label{sec:n28d13}
 
 \begin{figure}[h]
   \centering
@@ -241,7 +239,7 @@ Merging is most efficient when the two parts have approximately equal numbers of
 
 \subsection{High-Quality 16-Channel and 12-Channel 5-Layer Prefixes}
 
-We enumerate all non-redundant reflection-symmetric 12-channel 5-layer prefixes by extending and pruning one layer at a time.
+We enumerate all the non-redundant reflection-symmetric 12-channel 5-layer prefixes by the generate-and-prune approach \cite{codish2016sorting} one layer at a time.
 
 Starting from the set containing only the empty network, we extend the prefix set by one layer by enumerating all possible reflection-symmetric layers, then prune the resulting set using Corollary~\ref{corollary:redundant-prefixes-reflection}. This process yields 2164 non-redundant 12-channel 5-layer prefixes.
 
@@ -257,7 +255,7 @@ Starting from the set containing only the empty network, we extend the prefix se
 
 We consider a prefix $P$ high-quality if the size of $\operatorname{output}(P)$ is small. Among the 2164 non-redundant prefixes, we select the best 4 prefixes, which have output sizes of 34, 34, 35, and 35. All other prefixes have output sizes larger than 35.
 
-For $n=16$, enumerating all non-redundant 5-layer prefixes is computationally challenging. However, there exists an excellent choice: the first 5 layers of Van Voorhis's sorting network, shown in Figure~\ref{fig:n16d5vv}. The first four layers construct a 4-dimensional hypercube structure on the 16 channels. The 5th layer compares channels with the same Hamming weight symmetrically. This structure becomes clearer when we write the 5th layer in binary format: $(0001,0010),(0100,1000)$; $(0011,1100),(0101,1010),(0110,1001)$; $(0111,1011),(1101,1110)$. This design preserves as much information as possible by comparing corresponding keys \cite{al2009finding}. We found two other output sets isomorphic to this one but not isomorphic under reflection-symmetric permutations in $\mathcal{C}(\rho_{16})$.
+For $n=16$, enumerating all non-redundant 5-layer prefixes is computationally challenging. However, there exists an excellent choice: the first 5 layers of Van Voorhis's sorting network, shown in Figure~\ref{fig:n16d5vv}. The first four layers construct a 4-dimensional hypercube structure on the 16 channels. The 5th layer compares channels with the same Hamming weight symmetrically. This structure becomes clearer when we write the 5th layer in binary format: (0001,0010),(0100,1000); (0011,1100),(0101,1010),(0110,1001); (0111,1011),(1101,1110). This design preserves as much information as possible by comparing corresponding keys \cite{al2009finding}. We found two other output sets isomorphic to this one but not isomorphic under reflection-symmetric permutations in $\mathcal{C}(\rho_{16})$.
 
 \begin{figure}[h]
   \centering
@@ -292,7 +290,7 @@ In practice, it suffices to solve for just the best 8 prefixes in $\mathcal{P}_{
 
 \subsection{Implementation and Running Time}
 
-We ran our program on a Mac mini M2 with 16GB RAM. The entire computation takes less than 20 minutes to find the solution shown in Figure~\ref{fig:n28d13}. Specifically, finding the best 4 prefixes for 12 channels with 5 layers takes 12 minutes, while finding the best 2 prefixes for 16 channels with 5 layers takes 1 minute. We use MiniSat to solve the 8 SAT instances in parallel. It takes half a minute to find one solution, and 5 minutes to solve all 8 problems. All other steps complete very quickly.
+We ran our program on a Mac mini M2 with 16GB RAM. The entire computation takes less than 20 minutes to find the solution shown in Figure~\ref{fig:n28d13}. Specifically, finding the best 4 prefixes for 12 channels with 5 layers takes 7 minutes, while finding the best 2 prefixes for 16 channels with 5 layers takes 1 minute. We use MiniSat to solve the 8 SAT instances in parallel. It takes half a minute to find one solution, and 5 minutes to solve all 8 problems. All other steps complete very quickly.
 
 The complete program is available at \url{https://github.com/wcgbg/sorting-network-n28d13}.
 
