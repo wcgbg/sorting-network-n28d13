@@ -14,7 +14,8 @@ build:debug -c dbg
 build:debug --strip=never
 build:debug --copt=-g
 build:debug --copt=-O0
-build:debug --copt=-D_GLIBCXX_DEBUG
+build:debug --cxxopt=-D_GLIBCXX_DEBUG
+build:debug --cxxopt=-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
 build:debug --linkopt=-g
 build:debug --linkopt=-fsanitize=address
 build:debug --linkopt=-fsanitize=undefined
