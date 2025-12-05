@@ -162,3 +162,16 @@ The final sorting networks will be saved in `generated/solution.txt`.
 `network_info_main` shows and verfies networks.
 
 `draw.py` plots a network into svg format, and convert them to png and pdf (needs ImageMagick convert).
+
+## Citation
+```bibtex
+@misc{wang2025depth13sortingnetworks28,
+      title={Depth-13 Sorting Networks for 28 Channels}, 
+      author={Chengu Wang},
+      year={2025},
+      eprint={2511.04107},
+      archivePrefix={arXiv},
+      primaryClass={cs.DS},
+      url={https://arxiv.org/abs/2511.04107}, 
+}
+```
